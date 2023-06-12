@@ -17,9 +17,9 @@ class TabularLine():
 
         #usefull for debug
         if check_type:
-            err_message1 = StrTypeErr(self.string, 'TabularLine.string')
+            err_message1 = StrTypeErr(self.string)
             err_message1.Asses_Type()
-            err_message2 = StrTypeErr(self.delimiter, 'TabularLine.delimiter')
+            err_message2 = StrTypeErr(self.delimiter)
             err_message2.Asses_Type()
 
 
@@ -35,7 +35,7 @@ class Extract(TabularLine):
 
         #usefull for debug
         if check_type:
-            err_mssg_pos = IntTypeErr(self.position, 'ExtractField.position')
+            err_mssg_pos = IntTypeErr(self.position)
             err_mssg_pos.Asses_Type()
     
 
