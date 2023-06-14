@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 
-from sys import exit
 from sys import stderr
 from abc import ABC, abstractmethod
 import io
