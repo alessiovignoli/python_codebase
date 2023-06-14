@@ -5,10 +5,12 @@ from type_error_messages import FileTypeErr
 class LineCounter:
 
     """
-    Very simple class to count lines in file.
+    Very simple class to count lines in file. (Already opened)
     """
 
     def __init__(self, in_file):
+
+        #Check if variable given is string
         variable_obj = FileTypeErr(in_file)
         variable_obj.Asses_Type()
         self.in_file = in_file

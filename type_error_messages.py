@@ -23,7 +23,7 @@ class StrTypeErr(TypeErrorMessage):
 
     def Asses_Type(self):
         if not isinstance(self.variable, str):
-            print(self.variable_name, ' variable is not the correct dataset type: string   given :', self.variable, '  type:', type(self.variable), file=stderr)
+            print(self.variable_name, ' variable is not the correct dataset type: string   given :', self.variable, '  type:', type(self.variable), "\n", file=stderr)
             raise TypeError("Variable is not string.")
 
 
@@ -34,7 +34,7 @@ class IntTypeErr(TypeErrorMessage):
 
     def Asses_Type(self):
         if not isinstance(self.variable, int):
-            print(self.variable_name, ' variable is not the correct dataset type: integer   given :', self.variable, '  type:', type(self.variable), file=stderr)
+            print(self.variable_name, ' variable is not the correct dataset type: integer   given :', self.variable, '  type:', type(self.variable),  "\n",  file=stderr)
             raise TypeError("Variable is not int.")
         
 
