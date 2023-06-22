@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
-from type_error_messages import FileTypeErr
-from type_error_messages import IntTypeErr
+from .type_error_messages import FileTypeErr
+from .type_error_messages import IntTypeErr
 
 class FileHeader():
 

@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 
-from file_existance import FileExists
-from count_lines import LineCounter
-from file_header import FileHeader
-from type_error_messages import IntTypeErr
-from tabular import ExtractField
-from tabular import ExtractNFields
+from .file_existance import FileExists
+from .count_lines import LineCounter
+from .file_header import FileHeader
+from .type_error_messages import IntTypeErr
+from .tabular import ExtractField
+from .tabular import ExtractNFields
 
 
 class TableParser():

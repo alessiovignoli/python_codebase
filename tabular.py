@@ -2,7 +2,7 @@
 
 from .type_error_messages import StrTypeErr
 from .type_error_messages import IntTypeErr
-from .type_error_messages import ListTypeErr\
+from .type_error_messages import ListTypeErr
 
 class TabularLine():
     """

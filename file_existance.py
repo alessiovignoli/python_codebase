@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 from os import path
-from type_error_messages import StrTypeErr
+from .type_error_messages import StrTypeErr
 from sys import stderr
 
 class FileExists():
