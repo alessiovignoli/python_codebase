@@ -36,7 +36,19 @@ class IntTypeErr(TypeErrorMessage):
         if not isinstance(self.variable, int):
             print('Variable is not integer,    given :', self.variable, '  type:', type(self.variable),  "\n",  file=stderr)
             raise TypeError("Variable is not int.")
-        
+
+
+class ListTypeErr(TypeErrorMessage):
+
+    def __init__(self, variable) -> None:
+        self.variable = variable
+
+    def Asses_Type(self):
+        if not isinstance(self.variable, list):
+            print('Variable is not a list,   given :', self.variable, '  type:', type(self.variable), "\n", file=stderr)
+            raise TypeError("Variable is not a list.")
+
+
 
 class FileTypeErr(TypeErrorMessage):
 
