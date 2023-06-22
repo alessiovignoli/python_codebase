@@ -2,7 +2,7 @@
 
 from type_error_messages import FileTypeErr
 
-class LineCounter:
+class LineCounter():
 
     """
     Very simple class to count lines in file. (Already opened)
