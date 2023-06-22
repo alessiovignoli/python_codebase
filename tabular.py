@@ -2,7 +2,7 @@
 
 from type_error_messages import StrTypeErr
 from type_error_messages import IntTypeErr
-
+from type_error_messages import ListTypeErr\
 
 class TabularLine():
     """
@@ -29,15 +29,8 @@ class Extract(TabularLine):
     subclass parent to all extract types functions
     """
 
-    def __init__(self, string, position, delimiter='\t', check_type=False) -> None:
+    def __init__(self, string,  delimiter='\t', check_type=False) -> None:
         super().__init__(string, delimiter, check_type)
-        self.position = position
-
-        #usefull for debug
-        if check_type:
-            err_mssg_pos = IntTypeErr(self.position)
-            err_mssg_pos.Asses_Type()
-    
 
 
   
@@ -47,11 +40,41 @@ class ExtractField(Extract):
     """
 
     def __init__(self, string, position, delimiter='\t', check_type=False) -> None:
-        super().__init__(string, position, delimiter, check_type)
-    
+        super().__init__(string, delimiter, check_type)
+        self.position = position
+
+        #usefull for debug
+        if check_type:
+            err_mssg_pos = IntTypeErr(self.position)
+            err_mssg_pos.Asses_Type()
+
+
     def Get_Field(self):
         return (self.string.split(self.delimiter)[self.position])
     
+
+
+class ExtractNFields(Extract):
+    """
+    extracts more than one field. The variable position in this case refers to a list of integers that are
+    all the fields/column of interest to be extracted
+    """
+
+    def __init__(self, string, position, delimiter='\t', check_type=False) -> None:
+        super().__init__(string, delimiter, check_type)
+        self.position = position
+
+        #usefull for debug
+        if check_type:
+            err_mssg_pos = ListTypeErr(self.position)
+            err_mssg_pos.Asses_Type()
+
+
+    def Get_Fields(self):
+        out_list = []
+        for i in self.position:
+            out_list.append(self.string.split(self.delimiter)[i])
+        return out_list
 
 
 class ExtractAllButField(Extract):
@@ -61,7 +84,13 @@ class ExtractAllButField(Extract):
     """
 
     def __init__(self, string, position, delimiter='\t', check_type=False) -> None:
-        super().__init__(string, position, delimiter, check_type)
+        super().__init__(string, delimiter, check_type)
+        self.position = position
+
+        #usefull for debug
+        if check_type:
+            err_mssg_pos = IntTypeErr(self.position)
+            err_mssg_pos.Asses_Type()
 
     # return the string
     def Remove_str(self):

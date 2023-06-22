@@ -6,7 +6,7 @@ from tabular import ExtractAllButField
 
 
 
-class TabularLinesMatcher():
+class TabularLinesMatcher(ABC):
     """
     This "super" class takes two strings/lines and matches them if the key provided is present in both.
     Any subclass of this only follow the above principle. 
