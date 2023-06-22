@@ -1,11 +1,10 @@
 #!/usr/bin/env python3
 
-from abc import ABC
 from os import path
 from type_error_messages import StrTypeErr
 from sys import stderr
 
-class FileExists(ABC):
+class FileExists():
 
     """
     Simple class for checking existance of file and reporting an error message in case it is not.
