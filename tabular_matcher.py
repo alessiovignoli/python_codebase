@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 
 from abc import ABC, abstractmethod
-from tabular import ExtractField
-from tabular import ExtractAllButField
+from .tabular import ExtractField
+from .tabular import ExtractAllButField
 
 
 
