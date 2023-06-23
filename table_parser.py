@@ -1,17 +1,15 @@
 #!/usr/bin/env python3
 
-from .file_existance import FileExists
-from .count_lines import LineCounter
 from .file_header import FileHeader
 from .type_error_messages import IntTypeErr
 from .tabular import ExtractField
 from .tabular import ExtractNFields
 
 
-class TableParser():
+class TableParser(object):
 
     """
-    Very general and broad class for parsing a tabular format file. This time the input is the whole file in itself. (as string).
+    Very general and broad class for parsing a tabular format file. This time the input is the whole file in itself. (as opened object).
     Evrey line should have one or more fields, all separated by an unique separator, 
     files that abide to this concepts are tsv and csv for example.
     It is not thought to write the input file just to read and do stuff based on reading.
@@ -29,22 +27,6 @@ class TableParser():
             self.header_lines = header_lines
         else:
             self.header_lines = 0
-        
-        # Check if file exists before doing anything
-        exists = FileExists(infile)
-        exists.Check()
-
-    
-    def TotalLines(self):
-
-        """
-        simple function for counting total number of lines in file
-        """
-
-        with open(self.infile, 'r') as intab:
-            line_counter = LineCounter(intab)
-            total_count = line_counter.Count_lines()
-        return total_count
 
 
 
@@ -67,14 +49,13 @@ class PercentageIDs(TableParser):
         """
 
         seen_ids = []
-        with open(self.infile, 'r') as in_file:
-            header_obj = FileHeader(in_file, self.header_lines)
-            header_obj.RemoveHeader()
-            for line in in_file:
-                extract_obj = ExtractField(line, self.id_pos, self.delimiter)
-                id_value = extract_obj.Get_Field()
-                if id_value not in seen_ids:
-                    seen_ids.append(id_value)
+        header_obj = FileHeader(self.infile, self.header_lines)
+        header_obj.RemoveHeader()
+        for line in self.infile:
+            extract_obj = ExtractField(line, self.id_pos, self.delimiter)
+            id_value = extract_obj.Get_Field()
+            if id_value not in seen_ids:
+                seen_ids.append(id_value)
         return len(seen_ids)
 
 
@@ -109,43 +90,40 @@ class TwoColumnStats(PercentageIDs):
         an lower value in Query col, that would be counted as an instance by this class, aka +1 to final count.
         """
 
-        with open(self.infile, 'r') as in_file:
-            header_obj = FileHeader(in_file, self.header_lines)
-            header_obj.RemoveHeader()
+        header_obj = FileHeader(self.infile, self.header_lines)
+        header_obj.RemoveHeader()
 
-            # extract first non header line info so that the if in the for loop can work right away
-            ext_obj = ExtractNFields(in_file.readline(), [self.id_pos, self.query_pos], self.delimiter)
-            first_list = ext_obj.Get_Fields()
-            buffer_id = first_list[0]
-            first_encounter_query = float(first_list[1].strip())    # The first value in query column per id
-            first_query_min = True                                  # Flag to know if to add a +1 to the final counter
-            final_counter = 0
+        # extract first non header line info so that the if in the for loop can work right away
+        ext_obj = ExtractNFields(self.infile.readline(), [self.id_pos, self.query_pos], self.delimiter)
+        first_list = ext_obj.Get_Fields()
+        buffer_id = first_list[0]
+        first_encounter_query = float(first_list[1].strip())    # The first value in query column per id
+        first_query_min = True                                  # Flag to know if to add a +1 to the final counter
+        final_counter = 0
 
-            for line in in_file:
-                extract_obj = ExtractNFields(line, [self.id_pos, self.query_pos], self.delimiter)
-                list_extracted = extract_obj.Get_Fields()
-               
-                # The case where identical id but the query value is lower than the first line in which the id was found
-                # final_counter should not be updated in this case as intended
-                if list_extracted[0] == buffer_id and float(list_extracted[1].strip()) <= first_encounter_query:
-                    first_query_min = False
+        for line in self.infile:
+            extract_obj = ExtractNFields(line, [self.id_pos, self.query_pos], self.delimiter)
+            list_extracted = extract_obj.Get_Fields()
+            
+            # The case where identical id but the query value is lower than the first line in which the id was found
+            # final_counter should not be updated in this case as intended
+            if list_extracted[0] == buffer_id and float(list_extracted[1].strip()) <= first_encounter_query:
+                first_query_min = False
 
-                # The case in which a deifferent id is found and all info and flags should be updated and in case final_counter increased
-                if list_extracted[0] != buffer_id:
-                    buffer_id = list_extracted[0]
-                    first_encounter_query = float(list_extracted[1].strip())
-                    
-                    if first_query_min:
-                        final_counter += 1
+            # The case in which a deifferent id is found and all info and flags should be updated and in case final_counter increased
+            if list_extracted[0] != buffer_id:
+                buffer_id = list_extracted[0]
+                first_encounter_query = float(list_extracted[1].strip())
+                
+                if first_query_min:
+                    final_counter += 1
 
-                    first_query_min = True
+                first_query_min = True
 
-            # last iteration so that last id also has a chance to be compared
-            last_obj = ExtractNFields(in_file.readline(), [self.id_pos, self.query_pos], self.delimiter)
-            last_list = ext_obj.Get_Fields()
-            if last_list[0] != buffer_id and first_query_min:
-                final_counter += 1
-            return final_counter
+        # last iteration so that last id also has a chance to be compared
+        if first_query_min:
+            final_counter += 1
+        return final_counter
 
 
     def HowManyIDsFirstQueryMax(self):
@@ -160,40 +138,37 @@ class TwoColumnStats(PercentageIDs):
         an higher value in Query col, that would be counted as an instance by this class, aka +1 to final count.
         """
 
-        with open(self.infile, 'r') as in_file:
-            header_obj = FileHeader(in_file, self.header_lines)
-            header_obj.RemoveHeader()
+        header_obj = FileHeader(self.infile, self.header_lines)
+        header_obj.RemoveHeader()
 
-            # extract first non header line info so that the if in the for loop can work right away
-            ext_obj = ExtractNFields(in_file.readline(), [self.id_pos, self.query_pos], self.delimiter)
-            first_list = ext_obj.Get_Fields()
-            buffer_id = first_list[0]
-            first_encounter_query = float(first_list[1].strip())    # The first value in query column per id
-            first_query_max = True                                  # Flag to know if to add a +1 to the final counter
-            final_counter = 0
+        # extract first non header line info so that the if in the for loop can work right away
+        ext_obj = ExtractNFields(self.infile.readline(), [self.id_pos, self.query_pos], self.delimiter)
+        first_list = ext_obj.Get_Fields()
+        buffer_id = first_list[0]
+        first_encounter_query = float(first_list[1].strip())    # The first value in query column per id
+        first_query_max = True                                  # Flag to know if to add a +1 to the final counter
+        final_counter = 0
 
-            for line in in_file:
-                extract_obj = ExtractNFields(line, [self.id_pos, self.query_pos], self.delimiter)
-                list_extracted = extract_obj.Get_Fields()
+        for line in self.infile:
+            extract_obj = ExtractNFields(line, [self.id_pos, self.query_pos], self.delimiter)
+            list_extracted = extract_obj.Get_Fields()
 
-                # The case where identical id but the query value is lower than the first line in which the id was found
-                # final_counter should not be updated in this case as intended
-                if list_extracted[0] == buffer_id and float(list_extracted[1].strip()) >= first_encounter_query:
-                    first_query_max = False
+            # The case where identical id but the query value is lower than the first line in which the id was found
+            # final_counter should not be updated in this case as intended
+            if list_extracted[0] == buffer_id and float(list_extracted[1].strip()) >= first_encounter_query:
+                first_query_max = False
 
-                # The case in which a deifferent id is found and all info and flags should be updated and in case final_counter increased
-                if list_extracted[0] != buffer_id:
-                    buffer_id = list_extracted[0]
-                    first_encounter_query = float(list_extracted[1].strip())
+            # The case in which a deifferent id is found and all info and flags should be updated and in case final_counter increased
+            if list_extracted[0] != buffer_id:
+                buffer_id = list_extracted[0]
+                first_encounter_query = float(list_extracted[1].strip())
 
-                    if first_query_max:
-                        final_counter += 1
+                if first_query_max:
+                    final_counter += 1
 
-                    first_query_max = True
+                first_query_max = True
 
-            # last iteration so that last id also has a chance to be compared
-            last_obj = ExtractNFields(in_file.readline(), [self.id_pos, self.query_pos], self.delimiter)
-            last_list = ext_obj.Get_Fields()
-            if last_list[0] != buffer_id and first_query_max:
-                final_counter += 1
-            return final_counter
+        # last iteration so that last id also has a chance to be compared
+        if first_query_max:
+            final_counter += 1
+        return final_counter
