@@ -29,6 +29,36 @@ class StrTypeErr(TypeErrorMessage):
             else:
                 print('Variable is not string,   given :', self.variable, '  type:', type(self.variable), "\n", file=stderr)
                 raise TypeError("Variable is not string.")
+            
+
+class BytesTypeErr(TypeErrorMessage):
+
+    def __init__(self, variable, no_print=False) -> None:
+        self.variable = variable
+        self.no_print = no_print
+
+    def Asses_Type(self):
+        if not isinstance(self.variable, bytes):
+            if self.no_print:
+                raise TypeError("Variable is not bytes.")
+            else:
+                print('Variable is not bytes,   given :', self.variable, '  type:', type(self.variable), "\n", file=stderr)
+                raise TypeError("Variable is not bytes.")
+            
+
+class BytesStrErr(TypeErrorMessage):
+
+    def __init__(self, variable, no_print=False) -> None:
+        self.variable = variable
+        self.no_print = no_print
+
+    def Asses_Type(self):
+        if not isinstance(self.variable, str) and not isinstance(self.variable, bytes):
+            if self.no_print:
+                raise TypeError("Variable is nor string nor bytes.")
+            else:
+                print('Variable is nor string nor bytes,   given :', self.variable, '  type:', type(self.variable), "\n", file=stderr)
+                raise TypeError("Variable is nor string nor bytes.")
 
 
 class IntTypeErr(TypeErrorMessage):
