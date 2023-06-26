@@ -2,6 +2,8 @@
 
 from .file_header import FileHeader
 from .type_error_messages import IntTypeErr
+from .type_error_messages import BytesStrErr
+from .type_error_messages import ListTypeErr
 from .tabular import ExtractField
 from .tabular import ExtractNFields
 
@@ -57,6 +59,50 @@ class PercentageIDs(TableParser):
             if id_value not in seen_ids:
                 seen_ids.append(id_value)
         return len(seen_ids)
+    
+
+class GrepLine(TableParser):
+
+    """
+    Returns lines that have a given field in them, (substring). Using the in built in function of python.
+    Input is a list or a string. Output is a list , empty if nothing is found.
+    """
+
+    def __init__(self, infile, keywords, delimiter='\t', header=True, header_lines=1) -> None:
+        super().__init__(infile, delimiter, header, header_lines)
+        self.keywords = keywords
+            
+    
+    def FromString(self):
+
+        # First check if a string is given
+        err_mssg = BytesStrErr(self.keywords)
+        err_mssg.Asses_Type()
+
+        grepped_lines = []
+        for line in self.infile:
+            if self.keywords in line:
+                grepped_lines.append(line)
+        return grepped_lines
+
+    
+    def FromList(self):
+
+        """
+        This function will get all lines containing at least one keyword, with no duplicated output lines.
+        """
+
+        # check if list is given
+        err_mssg = ListTypeErr(self.keywords)
+        err_mssg.Asses_Type()
+
+        grepped_lines = []
+        for line in self.infile:
+            for keyword in self.keywords:
+                if keyword in line:
+                    grepped_lines.append(line)
+                    break
+        return grepped_lines
 
 
 
