@@ -18,47 +18,63 @@ class TypeErrorMessage(ABC):
 
 class StrTypeErr(TypeErrorMessage):
 
-    def __init__(self, variable) -> None:
+    def __init__(self, variable, no_print=False) -> None:
         self.variable = variable
+        self.no_print = no_print
 
     def Asses_Type(self):
         if not isinstance(self.variable, str):
-            print('Variable is not string,   given :', self.variable, '  type:', type(self.variable), "\n", file=stderr)
-            raise TypeError("Variable is not string.")
+            if self.no_print:
+                raise TypeError("Variable is not string.")
+            else:
+                print('Variable is not string,   given :', self.variable, '  type:', type(self.variable), "\n", file=stderr)
+                raise TypeError("Variable is not string.")
 
 
 class IntTypeErr(TypeErrorMessage):
 
-    def __init__(self, variable) -> None:
+    def __init__(self, variable, no_print=False) -> None:
         self.variable = variable
+        self.no_print = no_print
 
     def Asses_Type(self):
         if not isinstance(self.variable, int):
-            print('Variable is not integer,    given :', self.variable, '  type:', type(self.variable),  "\n",  file=stderr)
-            raise TypeError("Variable is not int.")
+            if self.no_print:
+                raise TypeError("Variable is not string.")
+            else:        
+                print('Variable is not integer,    given :', self.variable, '  type:', type(self.variable),  "\n",  file=stderr)
+                raise TypeError("Variable is not int.")
 
 
 class ListTypeErr(TypeErrorMessage):
 
-    def __init__(self, variable) -> None:
+    def __init__(self, variable, no_print=False) -> None:
         self.variable = variable
+        self.no_print = no_print
 
     def Asses_Type(self):
         if not isinstance(self.variable, list):
-            print('Variable is not a list,   given :', self.variable, '  type:', type(self.variable), "\n", file=stderr)
-            raise TypeError("Variable is not a list.")
+            if self.no_print:
+                raise TypeError("Variable is not string.")
+            else:
+                print('Variable is not a list,   given :', self.variable, '  type:', type(self.variable), "\n", file=stderr)
+                raise TypeError("Variable is not a list.")
 
 
 
 class FileTypeErr(TypeErrorMessage):
 
-    def __init__(self, variable) -> None:
+    def __init__(self, variable, no_print=False) -> None:
         self.variable = variable
+        self.no_print = no_print
 
     def Asses_Type(self):
         if not isinstance(self.variable, io.TextIOBase):
-            print("Invalid file object. Please pass an opened file object,   given :", self.variable, '  type:', type(self.variable), "\n", file=stderr)
-            raise TypeError("Invalid file object.")
+            if self.no_print:
+                raise TypeError("Variable is not string.")
+            else:
+                print("Invalid file object. Please pass an opened file object,   given :", self.variable, '  type:', type(self.variable), "\n", file=stderr)
+                raise TypeError("Invalid file object.")
 
 
 ### IMplement if needed file byte file or compressed because is a different data type than the above
