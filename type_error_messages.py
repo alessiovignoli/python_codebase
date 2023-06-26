@@ -40,7 +40,7 @@ class IntTypeErr(TypeErrorMessage):
     def Asses_Type(self):
         if not isinstance(self.variable, int):
             if self.no_print:
-                raise TypeError("Variable is not string.")
+                raise TypeError("Variable is not int.")
             else:        
                 print('Variable is not integer,    given :', self.variable, '  type:', type(self.variable),  "\n",  file=stderr)
                 raise TypeError("Variable is not int.")
@@ -55,7 +55,7 @@ class ListTypeErr(TypeErrorMessage):
     def Asses_Type(self):
         if not isinstance(self.variable, list):
             if self.no_print:
-                raise TypeError("Variable is not string.")
+                raise TypeError("Variable is not a list.")
             else:
                 print('Variable is not a list,   given :', self.variable, '  type:', type(self.variable), "\n", file=stderr)
                 raise TypeError("Variable is not a list.")
@@ -71,7 +71,7 @@ class FileTypeErr(TypeErrorMessage):
     def Asses_Type(self):
         if not isinstance(self.variable, io.TextIOBase):
             if self.no_print:
-                raise TypeError("Variable is not string.")
+                raise TypeError("Invalid file object.")
             else:
                 print("Invalid file object. Please pass an opened file object,   given :", self.variable, '  type:', type(self.variable), "\n", file=stderr)
                 raise TypeError("Invalid file object.")
