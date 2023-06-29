@@ -4,6 +4,7 @@ from .file_header import FileHeader
 from .type_error_messages import IntTypeErr
 from .type_error_messages import BytesStrErr
 from .type_error_messages import ListTypeErr
+from .type_error_messages import FileTypeErr
 from .tabular import ExtractField
 from .tabular import ExtractNFields
 
@@ -19,13 +20,13 @@ class TableParser(object):
     total number of lines in file and the header presence flag + the nuber of header lines.
     """
 
-    def __init__(self, infile, delimiter='\t', header=True, header_lines=1) -> None:
+    def __init__(self, infile, delimiter='\t', header_flag=True, header_lines=1) -> None:
         self.infile = infile
         self.delimiter = delimiter
         
         # Set header related variables  
-        self.header = header
-        if header:
+        self.header_flag = header_flag
+        if header_flag:
             self.header_lines = header_lines
         else:
             self.header_lines = 0
@@ -33,15 +34,19 @@ class TableParser(object):
 
 
 
-class PercentageIDs(TableParser):
+class OneColumn(TableParser):
 
     """
     This class has function related to a single field, all info that can be computed extracting just one column.
     """
 
-    def __init__(self, infile, id_pos, delimiter='\t', header=True, header_lines=1) -> None:
-        super().__init__(infile, delimiter, header, header_lines)
+    def __init__(self, infile, id_pos, delimiter='\t', header_flag=True, header_lines=1) -> None:
+        super().__init__(infile, delimiter, header_flag, header_lines)
         self.id_pos = id_pos
+    
+        # check if the value given for the query pos is an int 
+        err_mssg2 = IntTypeErr(id_pos)
+        err_mssg2.Asses_Type()
 
 
     def CountUniqueIDs(self):
@@ -68,9 +73,13 @@ class GrepLine(TableParser):
     Input is a list or a string. Output is a list , empty if nothing is found.
     """
 
-    def __init__(self, infile, keywords, delimiter='\t', header=True, header_lines=1) -> None:
-        super().__init__(infile, delimiter, header, header_lines)
+    def __init__(self, infile, keywords, delimiter='\t', header_flag=True, header_lines=1) -> None:
+        super().__init__(infile, delimiter, header_flag, header_lines)
         self.keywords = keywords
+
+        # first check if file is open
+        err_mssg1 = FileTypeErr(infile)
+        err_mssg1.Asses_Type()
             
     
     def FromString(self):
@@ -103,10 +112,48 @@ class GrepLine(TableParser):
                     grepped_lines.append(line)
                     break
         return grepped_lines
+    
+
+class ExtractColumn(OneColumn):
+    """
+    This class extracts specific columns from a tabular file.
+    The functions implemented below differ on the type of output.
+    Fields values are stripped by default, but this can be changed.
+    """
+
+    def __init__(self, infile, id_pos, delimiter='\t', header_flag=True, header_lines=1, strip=True) -> None:
+        super().__init__(infile, id_pos, delimiter, header_flag, header_lines)
+        self.strip = strip
+   
+        # Save the header to a given value in case is needed as a separate thing
+        header_obj = FileHeader(self.infile, self.header_lines)
+        self.header = header_obj.ReturnHeader()
+
+
+    def ReturnList(self):
+        """
+        This function returns a simple list with all the values found at that position. 
+        If some lines in the file do not have the column asked no error will be raised, for this reason
+        If the column position asked for is higher than the number of columns an empty list is returned.
+        """
+
+        col_list = []
+        for line in self.infile:
+            try:
+                line_extract = ExtractField(line, self.id_pos, self.delimiter)
+                field_value = line_extract.Get_Field()
+            except IndexError:
+                continue
+            else:
+                if self.strip:
+                    col_list.append(field_value.strip())
+                else:
+                    col_list.append(field_value)
+        return col_list
 
 
 
-class TwoColumnStats(PercentageIDs):
+class TwoColumnStats(OneColumn):
 
     """
     This class is thought to contain all the functiones that have to scroll throught the file and count how many
@@ -116,13 +163,10 @@ class TwoColumnStats(PercentageIDs):
     The column to use as reference is identified by id_pos while the second column associated with it is query_pos.
     """
 
-    def __init__(self, infile, id_pos, query_pos, delimiter='\t', header=True, header_lines=1) -> None:
-        super().__init__(infile, id_pos, delimiter, header, header_lines)
+    def __init__(self, infile, id_pos, query_pos, delimiter='\t', header_flag=True, header_lines=1) -> None:
+        super().__init__(infile, id_pos, delimiter, header_flag, header_lines)
         self.query_pos = query_pos
-    
-        # check if the value given for the query pos is an int
-        int_obj = IntTypeErr(query_pos)
-        int_obj.Asses_Type()
+
 
     def HowManyIDsFirstQueryMin(self):
 
