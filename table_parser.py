@@ -150,6 +150,29 @@ class ExtractColumn(OneColumn):
                 else:
                     col_list.append(field_value)
         return col_list
+    
+
+    def ReturnSet(self):
+        """
+        This function returns a simple set of the values found at that position.
+        If some lines in the file do not have the column asked no error will be raised, for this reason
+        If the column position asked for is higher than the number of columns an empty list is returned.
+        The set is usefull because repeated (identical) entryes will be automatically omitted.
+        """
+        
+        col_set = set()
+        for line in self.infile:
+            try:
+                line_extract = ExtractField(line, self.id_pos, self.delimiter)
+                field_value = line_extract.Get_Field()
+            except IndexError:
+                continue
+            else:
+                if self.strip:
+                    col_set.add(field_value.strip())
+                else:
+                    col_set.add(field_value)
+        return col_set
 
 
 
