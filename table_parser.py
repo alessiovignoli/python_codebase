@@ -45,8 +45,8 @@ class OneColumn(TableParser):
         self.id_pos = id_pos
     
         # check if the value given for the query pos is an int 
-        err_mssg2 = IntTypeErr(id_pos)
-        err_mssg2.Asses_Type()
+        err_mssg = IntTypeErr(id_pos)
+        err_mssg.Asses_Type()
 
 
     def CountUniqueIDs(self):
@@ -285,3 +285,46 @@ class TwoColumnStats(OneColumn):
         if first_query_max:
             final_counter += 1
         return final_counter
+
+
+
+class AggregateFields(OneColumn):
+    """
+    This class creates a dictionary or similar data structure, where fields correspomding to a given column (id_pos)
+    are groouped toghether by some sort of rule passed as third argument.
+    """
+
+    def __init__(self, infile, id_pos, grouping_rule, delimiter='\t', header_flag=True, header_lines=1) -> None:
+        super().__init__(infile, id_pos, delimiter, header_flag, header_lines)
+        self.grouping_rule = grouping_rule
+
+        # Save the header to a given value in case is needed as a separate thing
+        header_obj = FileHeader(self.infile, self.header_lines)
+        self.header = header_obj.ReturnHeader()
+
+
+    def GroupFromList(self, grouping_pos):
+        """
+        This function will output a dict object, and can work with both list or set as input.
+        The values in grouping_pos column will be checked if present on the list/set, if true then added to the dict.
+        The keys of the dict will be the values found in the list and the values of each key will be all the fields
+        that have that key in the line.
+        """
+
+        # First check if grouping_pos is an int
+        err_mssg = IntTypeErr(grouping_pos)
+        err_mssg.Asses_Type()
+
+        grouped_dict = {}
+        for line in self.infile:
+            extract_obj = ExtractNFields(line, [self.id_pos, grouping_pos], self.delimiter)
+            list_extracted = extract_obj.Get_Fields()
+
+            # The following if takes care of checking if a key (list_extracted[1]) is present in the list/set
+            # and adds it to the dict, either creating a new key:entry or adding to an existing one
+            if list_extracted[1] in self.grouping_rule and list_extracted[1] in grouped_dict:
+                grouped_dict[list_extracted[1]] += ( ',' + list_extracted[0] )
+            elif list_extracted[1] in self.grouping_rule and list_extracted[1] not in grouped_dict:
+                grouped_dict[list_extracted[1]] = list_extracted[0]
+        return grouped_dict
+
