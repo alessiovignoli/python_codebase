@@ -99,7 +99,7 @@ class FileTypeErr(TypeErrorMessage):
         self.no_print = no_print
 
     def Asses_Type(self):
-        if not isinstance(self.variable, io.TextIOBase):
+        if not isinstance(self.variable, io.TextIOBase) and not isinstance(self.variable, io.BufferedIOBase):
             if self.no_print:
                 raise TypeError("Invalid file object.")
             else:
