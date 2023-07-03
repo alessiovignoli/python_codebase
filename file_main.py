@@ -72,7 +72,7 @@ class File(ABC):
         return header_list
     
 
-    def Count_lines(self):
+    def CountLines(self):
         """
         Very simple class to count lines in file.
         To not assume how to open the file, if compresse or not for example, this function works with already opened files.
@@ -91,7 +91,7 @@ class File(ABC):
         return line_count
     
 
-    def Open_Read(self):
+    def OpenRead(self):
         """
         This function deals with opening the file for reading only.
         It automaticly check if file compressed and open it accordingly.
@@ -111,7 +111,7 @@ class File(ABC):
             return opened_file
         
     
-    def Open_Write(self):
+    def OpenWrite(self):
         """
         This function deals with opening the file for writing only.
         """
@@ -120,7 +120,7 @@ class File(ABC):
         return opened_file
 
 
-    def Write_Gzip(self):
+    def WriteGzip(self):
         """
         This function deals with opening the file for writing a gzip file.
         """
@@ -129,7 +129,7 @@ class File(ABC):
         return opened_file
     
 
-    def Open_Append(self):
+    def OpenAppend(self):
         """
         This function deals with opening the file for appending to existing file.
          It automaticly check if file compressed and open it accordingly.
