@@ -4,6 +4,7 @@ from .file_main import File
 from .type_error_messages import StrTypeErr
 from .type_error_messages import IntTypeErr
 from .type_error_messages import ListTypeErr
+from .type_error_messages import ListSetErr
 from sys import stderr
 
 class TabularLine(object):
@@ -276,6 +277,154 @@ class TabularFile(File):
         # THe else is reserved to set type
         else:
             return set(col_list)
+        
+
+    def HowManyIDsFirstQueryMin(self, id_pos, query_pos, check_type=False):
+
+        """
+        This function is thought to be applied to and ordered file, in which there are multiple instances of
+        same value of Column ID, so to say that there can be consecutive lines with the identical value of Column ID.
+        Such lines must be consecutive for this function to work, again value bubba in Col ID can not be in line1-2-3 and 5.
+        Then this functions counts how many times for a given ID the value present in query_pos/Query_Column in the first line encountered
+        is the lowest of those found for that id.
+        For example if id=bubba on line one has value 10 in query field/column and in all other consecutive lines such id does not have
+        an lower value in Query col, that would be counted as an instance by this function, aka +1 to final count.
+        """
+
+        # First check if the file exist and positional val are integer
+        self.CheckExists()
+        err_mssg1 = IntTypeErr(id_pos)
+        err_mssg1.Asses_Type()
+        err_mssg2 = IntTypeErr(query_pos)
+        err_mssg2.Asses_Type()
+
+        # open the file and remove header
+        infile = self.OpenRead()
+        self.RemoveHeader(infile, self.header_lines)
+
+        # extract first non header line info so that the if in the for loop can work right away
+        tabline_obj = TabularLine(infile.readline(), self.delimiter, check_type)
+        first_list = tabline_obj.ExtractNFields([id_pos, query_pos])
+        buffer_id = first_list[0]
+        first_encounter_query = float(first_list[1].strip())    # The first value in query column per id
+        first_query_min = True                                  # Flag to know if to add a +1 to the final counter
+        final_counter = 0
+
+        for line in infile:
+            tabline_obj = TabularLine(line, self.delimiter, check_type)
+            list_extracted = tabline_obj.ExtractNFields([id_pos, query_pos])
+            
+            # The case where identical id but the query value is lower than the first line in which the id was found
+            # final_counter should not be updated in this case as intended
+            if list_extracted[0] == buffer_id and float(list_extracted[1].strip()) <= first_encounter_query:
+                first_query_min = False
+
+            # The case in which a deifferent id is found and all info and flags should be updated and in case final_counter increased
+            if list_extracted[0] != buffer_id:
+                buffer_id = list_extracted[0]
+                first_encounter_query = float(list_extracted[1].strip())
+                if first_query_min:
+                    final_counter += 1
+                first_query_min = True
+
+        # last iteration so that last id also has a chance to be compared
+        if first_query_min:
+            final_counter += 1
+        return final_counter
+    
+
+    def HowManyIDsFirstQueryMax(self, id_pos, query_pos, check_type=False):
+
+        """
+        This function is thought to be applied to and ordered file, in which there are multiple instances of
+        same value of Column ID, so to say that there can be consecutive lines with the identical value of Column ID.
+        Such lines must be consecutive for this function to work, again value bubba in Col ID can not be in line1-2-3 and 5.
+        Then this functions counts how many times for a given ID the value present in query_pos/Query_Column in the first line encountered
+        is the highest of those found for that id.
+        For example if id=bubba on line one has value 10 in query field/column and in all other consecutive lines such id does not have
+        an higher value in Query col, that would be counted as an instance by this class, aka +1 to final count.
+        """
+
+        # First check if the file exist and positional val are integer
+        self.CheckExists()
+        err_mssg1 = IntTypeErr(id_pos)
+        err_mssg1.Asses_Type()
+        err_mssg2 = IntTypeErr(query_pos)
+        err_mssg2.Asses_Type()
+
+        # open the file and remove header
+        infile = self.OpenRead()
+        self.RemoveHeader(infile, self.header_lines)
+
+        # extract first non header line info so that the if in the for loop can work right away
+        tabline_obj = TabularLine(infile.readline(), self.delimiter, check_type)
+        first_list = tabline_obj.ExtractNFields([id_pos, query_pos])
+        buffer_id = first_list[0]
+        first_encounter_query = float(first_list[1].strip())    # The first value in query column per id
+        first_query_min = True                                  # Flag to know if to add a +1 to the final counter
+        final_counter = 0
+
+        for line in infile:
+            tabline_obj = TabularLine(line, self.delimiter, check_type)
+            list_extracted = tabline_obj.ExtractNFields([id_pos, query_pos])
+            
+            # The case where identical id but the query value is lower than the first line in which the id was found
+            # final_counter should not be updated in this case as intended
+            if list_extracted[0] == buffer_id and float(list_extracted[1].strip()) >= first_encounter_query:
+                first_query_min = False
+
+            # The case in which a deifferent id is found and all info and flags should be updated and in case final_counter increased
+            if list_extracted[0] != buffer_id:
+                buffer_id = list_extracted[0]
+                first_encounter_query = float(list_extracted[1].strip())
+                if first_query_min:
+                    final_counter += 1
+                first_query_min = True
+
+        # last iteration so that last id also has a chance to be compared
+        if first_query_min:
+            final_counter += 1
+        return final_counter
+
+
+    def AggregateFromList(self, id_pos, grouping_pos, grouping_rule, check_type=False):
+        """
+        This function will output a dict object, and can work with both list or set as input.
+        The values in grouping_pos column will be checked if present on the list/set, if true then added to the dict.
+        The keys of the dict will be the values found in the list (grouping_pos) and the values of each key will be all the id_pos
+        of every line that have such key. Example:
+        line1 ->  a,2,3,4       line2 -> a,1,2,3,4      line3 -> b,33,4     line4 -> c,22,4
+        grouping_rule = ['a', 'b']     id_pos = 2
+        dict_out -> {'a': '3,2', 'b': '4'}
+        """
+
+        # First check if the file exist and positional val are integer
+        self.CheckExists()
+        err_mssg1 = IntTypeErr(id_pos)
+        err_mssg1.Asses_Type()
+        err_mssg2 = IntTypeErr(grouping_pos)
+        err_mssg2.Asses_Type()
+
+        # Check if grouping_rule is either a list or set
+        err_mssg3 = ListSetErr(grouping_rule)
+        err_mssg3.Asses_Type()
+
+        # open the file and remove header
+        infile = self.OpenRead()
+        self.RemoveHeader(infile, self.header_lines)
+
+        grouped_dict = {}
+        for line in infile:
+            tabline_obj = TabularLine(line, self.delimiter, check_type)
+            list_extracted = tabline_obj.ExtractNFields([id_pos, grouping_pos])
+
+            # The following if takes care of checking if a key (list_extracted[1]) is present in the list/set
+            # and adds it to the dict, either creating a new key:entry or adding to an existing one
+            if list_extracted[1] in grouping_rule and list_extracted[1] in grouped_dict:
+                grouped_dict[list_extracted[1]] += ( ',' + list_extracted[0] )
+            elif list_extracted[1] in grouping_rule and list_extracted[1] not in grouped_dict:
+                grouped_dict[list_extracted[1]] = list_extracted[0]
+        return grouped_dict        
 
 
 
