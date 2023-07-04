@@ -64,7 +64,7 @@ class TabularLine(object):
         return l
 
 
-    def ExtractAllButField(self, position, return_type='str'):
+    def ExtractAllButField(self, position, return_type='STR'):
         """
         extracts the whole line except the field asked, is basically a special case of slice.
         It can return a string (default) or a list as output. (more if implemnted)
@@ -75,14 +75,14 @@ class TabularLine(object):
             err_mssg_pos = IntTypeErr(position)
             err_mssg_pos.Asses_Type()
         
-        allowed_return_types = ['str', 'string', 'list', 'List']
-        if return_type not in allowed_return_types:
-            print('the return_type argument is not allowed, given :', return_type, '  allowed values', allowed_return_types, "\n", file=stderr)
+        allowed_return_types = ['STR', 'STRING', 'LIST']
+        if return_type.upper() not in allowed_return_types:
+            print('the return_type argument is not allowed, given :', return_type.upper(), '  allowed values', allowed_return_types, "\n", file=stderr)
             raise TypeError("Argument not allowed.")
         
         l = self.string.split(self.delimiter)
         l.pop(position)
-        if return_type == 'list' or return_type == 'List':
+        if return_type.upper() == 'LIST':
             return l
         
         # in the elif implement other cases
@@ -118,12 +118,6 @@ class TabularLine(object):
         else:
             return None
 
-
-        
-
-        
-
-
         
 
 class TabularFile(File):
@@ -132,11 +126,20 @@ class TabularFile(File):
     Child of the very general File class
     """
 
-    def __init__(self, file_name):
+    def __init__(self, file_name, delimiter, header_flag=True, header_lines=1):
         super().__init__(file_name)
+        self.delimiter = delimiter
+
+        # Set header related variables  
+        self.header_flag = header_flag
+        if header_flag:
+            self.header_lines = header_lines
+        else:
+            self.header_lines = 0
+        
 
     
-    def IntersectTables(self, table_object2, out_filename, pos1=0, pos2=0):
+    def IntersectTables(self, table_object2, out_filename, pos1=0, pos2=0,  check_type=False):
         """
         This function takes two tabular files objects and writes to out_filename the intersection of them.
         By intersection is meant all lines that have a matching position. Given the example:
@@ -159,12 +162,12 @@ class TabularFile(File):
             file2 = table_object2.OpenRead()
 
             #Initialize a tabular line object to perform the merge later
-            tabline_obj = TabularLine(line1, self.delimiter)
+            tabline_obj = TabularLine(line1, self.delimiter, check_type)
 
             for line2 in file2:
                 
                 # Line2 also needs to be an instance of class tabular line
-                tabline2_obj = TabularLine(line2, table_object2.delimiter)
+                tabline2_obj = TabularLine(line2, table_object2.delimiter,  check_type)
                 merged_lines = tabline_obj.MergeByKeyPos(tabline2_obj, pos1, pos2)
 
                 # Since the merga return None value when it did not find a match this if is necessary 
@@ -173,19 +176,120 @@ class TabularFile(File):
 
             # Need to close file2 so it can be re-opened and have all flines again
             file2.close()
-
-            
-
     
+
+    def CountUniqueIDs(self, pos, check_type=False):
+        """
+        this function computes how many values of given field/column are unique, aka not identical, using exact string matching.
+        Header lines are not considered by this function.
+        """
+
+        seen_ids = []    
+        infile = self.OpenRead()
+        self.RemoveHeader(infile, self.header_lines)
+        for line in infile:
+            tabline_obj = TabularLine(line, self.delimiter, check_type)
+            id_value = tabline_obj.ExtractField(pos)
+            if id_value not in seen_ids:
+                seen_ids.append(id_value)
+        return len(seen_ids)
+    
+
+    def GrepLine(self, keyword):
+        """
+        Returns lines that have a given field in them, (substring). Using the in built in function of python.
+        Input is a list or a string. Output is a list , empty if nothing is found.
+        """
+
+        # First check if the file exist before attemping anything else
+        self.CheckExists()
+
+        # Second thing is to check if the keyword is a string or a list and unify to list for the for loop
+        keyword_list = None
+        try:
+            err_message1 = StrTypeErr(keyword, no_print=True)
+            err_message1.Asses_Type()
+        except TypeError:
+            err_message2 = ListTypeErr(keyword, custom_print='Variable must be string or list type')
+            err_message2.Asses_Type()
+            keyword_list = keyword
+        else:
+            keyword_list = [keyword]
+        
+        # open the input file and scroll through it
+        infile = self.OpenRead()
+        grepped_lines = []
+        for line in infile:
+            for word in keyword_list:
+                if word in line:
+                    grepped_lines.append(line)
+                    break
+        return grepped_lines
+
+
+    def ExtractColumn(self, pos, return_type='LIST', strip=True, check_type=False):
+        """
+        This function extracts specific columns from a tabular file.
+        The output can be of ?two? types list or set (more can be implemented). Default list.
+        Set has the property to not have identical/repeated elements in it.
+        It is basically a list of unique elements.
+        Fields values are stripped by default, but this can be changed.
+        If this function is asked to return a list, it will have all the values found at that position. 
+        If some lines in the file do not have the column asked no error will be raised, for this reason
+        If the column position asked for is higher than the number of columns an empty list is returned.
+        """
+
+        # First check if the file exist and pos is an integer
+        self.CheckExists()
+        err_mssg_pos = IntTypeErr(pos)
+        err_mssg_pos.Asses_Type()
+
+        # open the input file and scroll through it
+        infile = self.OpenRead()
+
+        # Check if the correct word is passed for output type
+        allowed_return_types = ['SET', 'LIST']
+        if return_type.upper() not in allowed_return_types:
+            print('the return_type argument is not allowed, given :', return_type.upper(), '  allowed values', allowed_return_types, "\n", file=stderr)
+            raise TypeError("Argument not allowed.")
+        
+        # Extract the fields or trying to and strip in case
+        col_list = []
+        for line in infile:
+            try:
+                tabline_obj = TabularLine(line, self.delimiter, check_type)
+                field_value = tabline_obj.ExtractField(pos)
+            except IndexError:
+                continue
+            else:
+                if strip:
+                    col_list.append(field_value.strip())
+                else:
+                    col_list.append(field_value)
+
+        # Define the output type
+        if return_type.upper() == 'LIST':
+            return col_list
+        
+        # PUT HERE THE OTHER TYPE OF OUTPUTS AND CONVERSION LINES
+
+        # THe else is reserved to set type
+        else:
+            return set(col_list)
+
+
+
+
 
 class TSV(TabularFile):
     """
     Still to implement remember it must not open the file on start
     """
 
-    def __init__(self, file_name):
-        super().__init__(file_name)
+    def __init__(self, file_name, header_flag=True, header_lines=1):
         self.delimiter = '\t'
+        super().__init__(file_name, delimiter=self.delimiter, header_flag=header_flag, header_lines=header_lines)
+
 
 
 class CSV(TabularFile):
@@ -193,6 +297,6 @@ class CSV(TabularFile):
     Still to implement remember it must not open the file on start
     """
 
-    def __init__(self, file_name):
-        super().__init__(file_name)
+    def __init__(self, file_name, header_flag=True, header_lines=1):
         self.delimiter = ','
+        super().__init__(file_name, delimiter=self.delimiter, header_flag=header_flag, header_lines=header_lines)
