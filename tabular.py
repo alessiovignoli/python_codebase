@@ -154,14 +154,25 @@ class TabularFile(File):
         # Open the first file an go line by line, second file will be opened number_of_line_in_file1
         file1 = self.OpenRead()
         out = open(out_filename, 'w')
+
         for line1 in file1:
             file2 = table_object2.OpenRead()
+
+            #Initialize a tabular line object to perform the merge later
+            tabline_obj = TabularLine(line1, self.delimiter)
+
             for line2 in file2:
-                tabline_obj = TabularLine(line1, pos1)
-                matched_lines = MatchByKeyPos(line1, line2, pos1, pos2, del1, del2, check)
-                    matched_line = matched_lines.Match()
-                    if matched_line:
-                        out.write(matched_line)
+                
+                # Line2 also needs to be an instance of class tabular line
+                tabline2_obj = TabularLine(line2, table_object2.delimiter)
+                merged_lines = tabline_obj.MergeByKeyPos(tabline2_obj, pos1, pos2)
+
+                # Since the merga return None value when it did not find a match this if is necessary 
+                if merged_lines:
+                    out.write(merged_lines)
+
+            # Need to close file2 so it can be re-opened and have all flines again
+            file2.close()
 
             
 
@@ -174,6 +185,7 @@ class TSV(TabularFile):
 
     def __init__(self, file_name):
         super().__init__(file_name)
+        self.delimiter = '\t'
 
 
 class CSV(TabularFile):
@@ -183,3 +195,4 @@ class CSV(TabularFile):
 
     def __init__(self, file_name):
         super().__init__(file_name)
+        self.delimiter = ','
