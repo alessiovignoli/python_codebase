@@ -34,14 +34,14 @@ class File(ABC):
             raise TypeError("File does not exists")
         
 
-    def RemoveHeader(self, header_lines=1):
+    def RemoveHeader(self, file_obj, header_lines=1):
         """
         Simple function for removing header lines (since the file is already opened).
         It basically consumes the lines on an opened file.
         """
 
         # first check if file is open
-        variable1_obj = FileTypeErr(self.file_name)
+        variable1_obj = FileTypeErr(file_obj)
         variable1_obj.Asses_Type()
 
         #check if header_lines is an int
@@ -49,17 +49,17 @@ class File(ABC):
         variable2_obj.Asses_Type()
 
         for _ in range(0, header_lines):
-            self.file_name.readline()
+            file_obj.readline()
 
     
-    def ReturnHeader(self, header_lines=1):
+    def ReturnHeader(self, file_obj, header_lines=1):
         """
         Simple function for extracting header lines and putting them in a list variable as strings.
         It works on already opened files
         """
 
         # first check if file is open
-        variable1_obj = FileTypeErr(self.file_name)
+        variable1_obj = FileTypeErr(file_obj)
         variable1_obj.Asses_Type()
 
         #check if header_lines is an int
@@ -68,11 +68,11 @@ class File(ABC):
 
         header_list = []
         for _ in range(0, header_lines):
-            header_list.append(self.file_name.readline())
+            header_list.append(file_obj.readline())
         return header_list
     
 
-    def CountLines(self):
+    def CountLines(self, file_obj):
         """
         Very simple class to count lines in file.
         To not assume how to open the file, if compresse or not for example, this function works with already opened files.
@@ -82,11 +82,11 @@ class File(ABC):
         """
 
         # first check if file is open
-        variable1_obj = FileTypeErr(self.file_name)
+        variable1_obj = FileTypeErr(file_obj)
         variable1_obj.Asses_Type()
 
         line_count = 0
-        for _ in self.file_name:
+        for _ in file_obj:
             line_count += 1
         return line_count
     
