@@ -4,6 +4,7 @@ from abc import ABC, abstractmethod
 from os import path
 from sys import stderr
 import gzip
+import pickle 
 from .type_error_messages import StrTypeErr
 from .type_error_messages import FileTypeErr
 from .type_error_messages import IntTypeErr
@@ -98,9 +99,12 @@ class File(ABC):
         It does so checking the extention. .gz -> gzip
         """
 
-        #check for extention
+        #check for extention: gzip pickle ecc..
         if self.file_name[-3:] == '.gz':
             opened_file = gzip.open(self.file_name, 'rb')
+            return opened_file
+        elif self.file_name[-4:] == '.pkl':
+            opened_file = open(self.file_name, 'rb')
             return opened_file
         
         # Implement here other type of compression
@@ -147,3 +151,30 @@ class File(ABC):
         else:
             opened_file = open(self.file_name, 'a')
             return opened_file
+        
+
+    def PickleDump(self, val_obj):
+        """
+        Function for saving to zipped file objects in python like lists sets or dictionaries.
+        Write to file functions usually only accepts string type object, pickle instead allows to use almost any object type.
+        The file has to be passed as string. This function automaticly opens it and writes in binary mode (compressed).
+        """
+
+        # Check if the filename given terminates with extention .pkl otherwise add such 
+        if self.file_name[-4:] != '.pkl':
+            self.file_name = self.file_name + '.pkl'
+
+        with open(self.file_name, 'wb') as opened_file:
+            pickle.dump(val_obj, opened_file)
+
+
+    def PickleLoad(self):
+        """
+        Function for reading file objects in python saved using picke (pickle dump).
+        The function automaticly open the file for reading and return the object that was saved to the file this way.
+        """
+
+        # open the file and then load the object using pickle
+        opened_file = self.OpenRead()
+        loaded_obj = pickle.load(opened_file)
+        return loaded_obj
