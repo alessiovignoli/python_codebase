@@ -92,7 +92,7 @@ class File(ABC):
         return line_count
     
 
-    def OpenRead(self):
+    def OpenRead(self, uncompress=False):
         """
         This function deals with opening the file for reading only.
         It automaticly check if file compressed and open it accordingly.
@@ -101,8 +101,13 @@ class File(ABC):
 
         #check for extention: gzip pickle ecc..
         if self.file_name[-3:] == '.gz':
-            opened_file = gzip.open(self.file_name, 'rb')
-            return opened_file
+            if uncompress:
+                opened_file = gzip.open(self.file_name, 'rt')
+                return opened_file
+            else:
+                opened_file = gzip.open(self.file_name, 'rb')
+                return opened_file
+            
         elif self.file_name[-4:] == '.pkl':
             opened_file = open(self.file_name, 'rb')
             return opened_file

@@ -13,6 +13,7 @@ class TabularLine(object):
     """
     tabular specific helper functions are stored in this class, it is meant to work on strings instead of files.
     The idea behind is to work on files line by line to decreas memory usage.
+    All function will always return a string or set/list/dict etc.. of strings.
     """
 
     def __init__(self, string, delimiter='\t', check_type=False) -> None:
@@ -27,12 +28,12 @@ class TabularLine(object):
             err_message2 = BytesStrErr(self.delimiter)
             err_message2.Asses_Type()
 
-        #Omogenize string and delimiter variables, aka make them both either string or bytes type
-        #is the string variable that decides the outcome type
-        if isinstance(self.string, str) and isinstance(self.delimiter, bytes):
+        # Omogenize string and delimiter variables in case they are bytes, aka make them both string 
+        if isinstance(self.string, bytes):
+            self.string = self.string.decode('utf-8')
+        if isinstance(self.delimiter, bytes):
             self.delimiter = self.delimiter.decode('utf-8')
-        elif isinstance(self.string, bytes) and isinstance(self.delimiter, str):
-            self.delimiter = bytes(self.delimiter, 'utf-8')
+        
     
 
     def ExtractField(self, position):
@@ -116,15 +117,6 @@ class TabularLine(object):
         a tsv and a csv files are joined all line will have the same spatiatior.
         """
 
-        # In case the two strings are of different types the sond one is put to the same type of the first
-        if isinstance(self.string, str) and isinstance(tabline_onject2.string, bytes):
-            tabline_onject2.string = tabline_onject2.string.decode('utf-8')
-            tabline_onject2.delimiter = tabline_onject2.delimiter.decode('utf-8')
-        elif isinstance(self.string, bytes) and isinstance(tabline_onject2.string, str):
-            tabline_onject2.string = bytes(tabline_onject2.string, 'utf-8')
-            tabline_onject2.delimiter = bytes(tabline_onject2.delimiter, 'utf-8')
-
-
         # Calling of other functions inside this class
         key1 = self.ExtractField(pos1)
         key2 = tabline_onject2.ExtractField(pos2)
@@ -157,7 +149,7 @@ class TabularFile(File):
         
 
     
-    def IntersectTables(self, table_object2, out_filename, pos1=0, pos2=0,  check_type=False):
+    def IntersectTables(self, table_object2, outfile_obj, pos1=0, pos2=0, compress=False, check_type=False):
         """
         This function takes two tabular files objects and writes to out_filename the intersection of them.
         By intersection is meant all lines that have a matching position. Given the example:
@@ -165,6 +157,7 @@ class TabularFile(File):
         in the output file will be written -> a,b,c,d,e,f\n
         All lines in file1 are checked against all lines in file2, in a line by line fashion.
         Non-matching pairs of lines will not be written, as well as lines that do not have a match in the other file.
+        The function can compress the output file iff specified. The outfile_obj has to be instanciated as part of the File class.
         """
 
 
@@ -174,28 +167,37 @@ class TabularFile(File):
 
         # Open the first file an go line by line, second file will be opened number_of_line_in_file1
         file1 = self.OpenRead()
-        print(file1)
-        out = open(out_filename, 'w')
 
+        # add .gz extention to the out filename if not present and compression requested and viceversa
+        if outfile_obj.file_name[-3:] != '.gz' and compress:
+            outfile_obj.file_name += '.gz'
+        elif outfile_obj.file_name[-3:] == '.gz' and not compress:
+            outfile_obj.file_name = outfile_obj.file_name[:-3]
+        out = outfile_obj.OpenWrite()
+        
         for line1 in file1:
             file2 = table_object2.OpenRead()
 
             #Initialize a tabular line object to perform the merge later
             tabline_obj = TabularLine(line1, self.delimiter, check_type)
-            #print('line1 :', line1, '  obj1 :', tabline_obj.string, tabline_obj.delimiter)
+            
             for line2 in file2:
                 
                 # Line2 also needs to be an instance of class tabular line
                 tabline2_obj = TabularLine(line2, table_object2.delimiter,  check_type)
-                #print('line2 :', line2, '  obj2 :', tabline2_obj.string, tabline2_obj.delimiter)
                 merged_lines = tabline_obj.MergeByKeyPos(tabline2_obj, pos1, pos2)
 
                 # Since the merga return None value when it did not find a match this if is necessary 
-                if merged_lines:
+                # this also deals with compression
+                if merged_lines and compress:
+                    compresse_merged_lines = bytes(merged_lines, 'utf-8')
+                    out.write(compresse_merged_lines)
+                elif merged_lines and not compress:
                     out.write(merged_lines)
 
             # Need to close file2 so it can be re-opened and have all flines again
             file2.close()
+            
     
 
     def CountUniqueIDs(self, pos, check_type=False):
@@ -218,7 +220,8 @@ class TabularFile(File):
     def GrepLine(self, keyword):
         """
         Returns lines that have a given field in them, (substring). Using the in built in function of python.
-        Input is a list or a string. Output is a list , empty if nothing is found.
+        Input is a list or a string. Output is a list of string, empty if nothing is found.
+    
         """
 
         # First check if the file exist before attemping anything else
@@ -237,7 +240,7 @@ class TabularFile(File):
             keyword_list = [keyword]
         
         # open the input file and scroll through it
-        infile = self.OpenRead()
+        infile = self.OpenRead(uncompress=True)
         grepped_lines = []
         for line in infile:
             for word in keyword_list:
