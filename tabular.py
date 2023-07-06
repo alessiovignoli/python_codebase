@@ -2,6 +2,8 @@
 
 from .file_main import File
 from .type_error_messages import StrTypeErr
+from .type_error_messages import BytesTypeErr
+from .type_error_messages import BytesStrErr
 from .type_error_messages import IntTypeErr
 from .type_error_messages import ListTypeErr
 from .type_error_messages import ListSetErr
@@ -20,10 +22,17 @@ class TabularLine(object):
 
         #usefull for debug
         if self.check_type:
-            err_message1 = StrTypeErr(self.string)
+            err_message1 = BytesStrErr(self.string)
             err_message1.Asses_Type()
-            err_message2 = StrTypeErr(self.delimiter)
+            err_message2 = BytesStrErr(self.delimiter)
             err_message2.Asses_Type()
+
+        #Omogenize string and delimiter variables, aka make them both either string or bytes type
+        #is the string variable that decides the outcome type
+        if isinstance(self.string, str) and isinstance(self.delimiter, bytes):
+            self.delimiter = self.delimiter.decode('utf-8')
+        elif isinstance(self.string, bytes) and isinstance(self.delimiter, str):
+            self.delimiter = bytes(self.delimiter, 'utf-8')
     
 
     def ExtractField(self, position):
@@ -107,6 +116,14 @@ class TabularLine(object):
         a tsv and a csv files are joined all line will have the same spatiatior.
         """
 
+        # In case the two strings are of different types the sond one is put to the same type of the first
+        if isinstance(self.string, str) and isinstance(tabline_onject2.string, bytes):
+            tabline_onject2.string = tabline_onject2.string.decode('utf-8')
+            tabline_onject2.delimiter = tabline_onject2.delimiter.decode('utf-8')
+        elif isinstance(self.string, bytes) and isinstance(tabline_onject2.string, str):
+            tabline_onject2.string = bytes(tabline_onject2.string, 'utf-8')
+            tabline_onject2.delimiter = bytes(tabline_onject2.delimiter, 'utf-8')
+
 
         # Calling of other functions inside this class
         key1 = self.ExtractField(pos1)
@@ -157,6 +174,7 @@ class TabularFile(File):
 
         # Open the first file an go line by line, second file will be opened number_of_line_in_file1
         file1 = self.OpenRead()
+        print(file1)
         out = open(out_filename, 'w')
 
         for line1 in file1:
@@ -164,11 +182,12 @@ class TabularFile(File):
 
             #Initialize a tabular line object to perform the merge later
             tabline_obj = TabularLine(line1, self.delimiter, check_type)
-
+            #print('line1 :', line1, '  obj1 :', tabline_obj.string, tabline_obj.delimiter)
             for line2 in file2:
                 
                 # Line2 also needs to be an instance of class tabular line
                 tabline2_obj = TabularLine(line2, table_object2.delimiter,  check_type)
+                #print('line2 :', line2, '  obj2 :', tabline2_obj.string, tabline2_obj.delimiter)
                 merged_lines = tabline_obj.MergeByKeyPos(tabline2_obj, pos1, pos2)
 
                 # Since the merga return None value when it did not find a match this if is necessary 
