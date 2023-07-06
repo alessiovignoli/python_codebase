@@ -118,20 +118,25 @@ class File(ABC):
     def OpenWrite(self):
         """
         This function deals with opening the file for writing only.
+        It automaticly check if file compressed and open it accordingly.
+        It does so checking the extention. .gz -> gzip
         """
+
+        #check for extention: gzip pickle ecc..
+        if self.file_name[-3:] == '.gz':
+            opened_file = gzip.open(self.file_name, 'wb')
+            return opened_file
+        elif self.file_name[-4:] == '.pkl':
+            opened_file = open(self.file_name, 'wb')
+            return opened_file
         
-        opened_file = open(self.file_name, 'w')
-        return opened_file
+        # Implement here other type of compression
 
+        # if all implemented types of compression fail it is assumed not to be compressed
+        else:
+            opened_file = open(self.file_name, 'w')
+            return opened_file
 
-    def WriteGzip(self):
-        """
-        This function deals with opening the file for writing a gzip file.
-        """
-
-        opened_file = gzip.open(self.file_name, 'wb')
-        return opened_file
-    
 
     def OpenAppend(self):
         """
@@ -164,8 +169,8 @@ class File(ABC):
         if self.file_name[-4:] != '.pkl':
             self.file_name = self.file_name + '.pkl'
 
-        with open(self.file_name, 'wb') as opened_file:
-            pickle.dump(val_obj, opened_file)
+        opened_file = self.OpenWrite()
+        pickle.dump(val_obj, opened_file)
 
 
     def PickleLoad(self):
