@@ -53,10 +53,11 @@ class File(ABC):
             file_obj.readline()
 
     
-    def ReturnHeader(self, file_obj, header_lines=1):
+    def ReturnHeader(self, file_obj, header_lines=1, return_type='LIST'):
         """
         Simple function for extracting header lines and putting them in a list variable as strings.
-        It works on already opened files
+        It works on already opened files.
+        It can return either a string (concatenation of lines) or a list of string (line by line)
         """
 
         # first check if file is open
@@ -67,10 +68,21 @@ class File(ABC):
         variable2_obj = IntTypeErr(header_lines)
         variable2_obj.Asses_Type()
 
+        # check if return_type is correct
+        allowed_return_types = ['STR', 'STRING', 'LIST']
+        if return_type.upper() not in allowed_return_types:
+            print('the return_type argument is not allowed, given :', return_type.upper(), '  allowed values', allowed_return_types, "\n", file=stderr)
+            raise TypeError("Argument not allowed.")
+
+
         header_list = []
         for _ in range(0, header_lines):
             header_list.append(file_obj.readline())
-        return header_list
+
+        if return_type.upper() == 'LIST':
+            return header_list
+        else:
+            return ''.join(header_list)
     
 
     def CountLines(self, file_obj):
@@ -180,7 +192,7 @@ class File(ABC):
 
         # if all implemented types of compression fail it is assumed not to be compressed
         else:
-            opened_file = open(self.file_name, 'r+')
+            opened_file = open(self.file_name, 'w+')
             return opened_file
 
         
