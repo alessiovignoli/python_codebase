@@ -185,7 +185,7 @@ class File(ABC):
 
         #check for extention: pickle ecc..   
         if self.file_name[-4:] == '.pkl':
-            opened_file = open(self.file_name, 'r+b')
+            opened_file = open(self.file_name, 'w+b')
             return opened_file
         
         # Implement here other type of compression
