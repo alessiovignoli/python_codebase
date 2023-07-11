@@ -163,6 +163,28 @@ class File(ABC):
             return opened_file
         
 
+    def OpenEdit(self):
+        """
+        This function deals with opening the file for reading and writing aka edit.
+        It automaticly check if file compressed and open it accordingly.
+        It does so checking the extention. .pkl -> pickle saved object
+        Gzip is not supported for read and write.
+        """
+
+        #check for extention: pickle ecc..   
+        if self.file_name[-4:] == '.pkl':
+            opened_file = open(self.file_name, 'r+b')
+            return opened_file
+        
+        # Implement here other type of compression
+
+        # if all implemented types of compression fail it is assumed not to be compressed
+        else:
+            opened_file = open(self.file_name, 'r+')
+            return opened_file
+
+        
+
     def PickleDump(self, val_obj):
         """
         Function for saving to zipped file objects in python like lists sets or dictionaries.
