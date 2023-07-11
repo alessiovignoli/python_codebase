@@ -8,6 +8,7 @@ from .type_error_messages import IntTypeErr
 from .type_error_messages import ListTypeErr
 from .type_error_messages import ListSetErr
 from sys import stderr
+from math import log
 
 class TabularLine(object):
     """
@@ -127,6 +128,7 @@ class TabularLine(object):
             return (self.string.rstrip() + self.delimiter + ( self.delimiter.join(line2_minus_key) ))
         else:
             return None
+        
 
         
 
@@ -446,9 +448,56 @@ class TabularFile(File):
                 grouped_dict[list_extracted[1]] += ( ',' + list_extracted[0] )
             elif list_extracted[1] in grouping_rule and list_extracted[1] not in grouped_dict:
                 grouped_dict[list_extracted[1]] = list_extracted[0]
-        return grouped_dict        
+        return grouped_dict
 
 
+    def TwoFieldRatio(self, pos1, pos2, log_it=False, number_of_decimals=7, check_type=False):
+        """
+        BE CAREFULL THIS FUNCTION MIGHT USE A LOT OF RAM, AS MUSH AS THE SIZE OF THE INPUT FILE.
+
+        This function takes as input a tabular file with two or more fields/column per line.
+        It writes to the same file the ratio (division) of the two fields on the same line, example:
+        line1 -> 21, 7, 5       pos1 = 0, pos2 = 1
+        line1 after function -> 21, 7, 5, 3.0
+        log_it flag applies the log10 to the ratio before the writing.
+        number_of_decimals decides how many digits does have to have at most the string before writing.
+        100.45 is considered to have 6 (the points count) digits.
+        Header lines are automately removed, to not devide words 
+        """
+
+        # First check if the file exist and positional val are integer
+        self.CheckExists()
+        err_mssg1 = IntTypeErr(pos1)
+        err_mssg1.Asses_Type()
+        err_mssg2 = IntTypeErr(pos2)
+        err_mssg2.Asses_Type()
+
+        # Open the file for read and return header for later use
+        infile = self.OpenRead()
+        header_lnes = self.ReturnHeader(infile, self.header_lines, return_type='str')
+        
+        # Only way to update same file 
+        to_be_written = ''
+
+        # esxtract the values and do the division
+        for line in infile:
+            tabline_obj = TabularLine(line, self.delimiter, check_type)
+            list_extracted = tabline_obj.ExtractNFields([pos1, pos2])
+            ratio = float(list_extracted[0].strip()) / float(list_extracted[1].strip())
+            if log_it:
+                ratio = log(ratio)
+
+            # add to the corpus that is going to be written all at once, this is why is memory heavy
+            to_be_written += (line.rstrip() + self.delimiter + str(ratio)[:number_of_decimals] + '\n' )
+
+        # close and re-open file fopr writing    
+        infile.close()
+        infile = self.OpenEdit()
+
+        # to avoid writing over the input fiole when nothing has to be written
+        if to_be_written:
+            infile.write(header_lnes)
+            infile.write(to_be_written)
 
 
 
