@@ -242,13 +242,22 @@ class TabularFile(File):
             keyword_list = [keyword]
         
         # open the input file and scroll through it
+         # open the input file and scroll through it
         infile = self.OpenRead(uncompress=True)
-        grepped_lines = []
+        grepped_lines_dict = {}
         for line in infile:
             for word in keyword_list:
                 if word in line:
-                    grepped_lines.append(line)
-                    break
+                    if word in grepped_lines_dict:
+                        grepped_lines_dict[word].append(line)
+                    else:
+                        grepped_lines_dict[word] = [line]
+
+        # transform the dictionary to simple list conservin g order of input keyword list
+        grepped_lines = []
+        for dict_key in keyword_list:
+            for grepped_line in grepped_lines_dict[dict_key]:
+                grepped_lines.append(grepped_line)
         return grepped_lines
 
 
