@@ -242,7 +242,6 @@ class TabularFile(File):
             keyword_list = [keyword]
         
         # open the input file and scroll through it
-         # open the input file and scroll through it
         infile = self.OpenRead(uncompress=True)
         grepped_lines_dict = {}
         for line in infile:
